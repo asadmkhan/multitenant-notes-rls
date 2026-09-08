@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const schema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.url(),
   JWT_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default('cypex-hire'),
   JWT_AUDIENCE: z.string().default('postgrest'),
