@@ -1,0 +1,68 @@
+EXPLAIN (ANALYZE, BUFFERS) for the main read paths, run as the editor role with jwt claims set.
+The seed has only 6 notes, so the planner would just scan the table. For this snapshot
+200k extra notes were inserted in a transaction (a third org with 190k, 5k each for the two
+seed orgs) and rolled back afterwards. Nothing below is left in the database.
+
+
+==== GET /note (select * from note, rls adds org_id = auth.org_id())
+                                                            QUERY PLAN                                                             
+ Index Scan using note_org_id_idx on note  (cost=0.31..3811.56 rows=5273 width=148) (actual time=0.024..0.306 rows=5003 loops=1)
+   Index Cond: (org_id = (NULLIF(((current_setting('request.jwt.claims'::text, true))::json ->> 'org_id'::text), ''::text))::uuid)
+   Buffers: shared hit=119
+ Planning:
+   Buffers: shared hit=94
+ Planning Time: 0.497 ms
+ Execution Time: 0.426 ms
+(7 rows)
+
+
+==== POST /rpc/notes_for_me
+                                                               QUERY PLAN                                                                
+ Sort  (cost=8.36..8.37 rows=1 width=148) (actual time=0.022..0.023 rows=2 loops=1)
+   Sort Key: note.created_at DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=4
+   ->  Index Scan using note_author_id_idx on note  (cost=0.31..8.35 rows=1 width=148) (actual time=0.014..0.016 rows=2 loops=1)
+         Index Cond: (author_id = (NULLIF(((current_setting('request.jwt.claims'::text, true))::json ->> 'sub'::text), ''::text))::uuid)
+         Filter: (org_id = (NULLIF(((current_setting('request.jwt.claims'::text, true))::json ->> 'org_id'::text), ''::text))::uuid)
+         Buffers: shared hit=4
+ Planning:
+   Buffers: shared hit=52
+ Planning Time: 0.234 ms
+ Execution Time: 0.045 ms
+(12 rows)
+
+
+==== GET /note?id=eq.<uuid> (primary key lookup plus rls check)
+                                                                    QUERY PLAN                                                                    
+ Index Scan using note_pkey on note  (cost=1.46..9.49 rows=1 width=148) (actual time=0.024..0.025 rows=1 loops=1)
+   Index Cond: (id = (InitPlan 1).col1)
+   Filter: (org_id = (NULLIF(((current_setting('request.jwt.claims'::text, true))::json ->> 'org_id'::text), ''::text))::uuid)
+   Buffers: shared hit=7
+   InitPlan 1
+     ->  Limit  (cost=0.31..1.04 rows=1 width=16) (actual time=0.011..0.011 rows=1 loops=1)
+           Buffers: shared hit=3
+           ->  Index Scan using note_org_id_idx on note note_1  (cost=0.31..3811.56 rows=5273 width=16) (actual time=0.011..0.011 rows=1 loops=1)
+                 Index Cond: (org_id = (NULLIF(((current_setting('request.jwt.claims'::text, true))::json ->> 'org_id'::text), ''::text))::uuid)
+                 Buffers: shared hit=3
+ Planning Time: 0.066 ms
+ Execution Time: 0.047 ms
+(12 rows)
+
+
+==== auth-api login query
+                                                                 QUERY PLAN                                                                  
+ Nested Loop  (cost=0.30..20.35 rows=1 width=64) (actual time=0.015..0.015 rows=1 loops=1)
+   Buffers: shared hit=4
+   ->  Index Scan using org_slug_key on org o  (cost=0.15..8.17 rows=1 width=16) (actual time=0.006..0.007 rows=1 loops=1)
+         Index Cond: (slug = 'nordwind'::text)
+         Buffers: shared hit=2
+   ->  Index Scan using app_user_org_id_email_key on app_user u  (cost=0.15..8.17 rows=1 width=64) (actual time=0.007..0.007 rows=1 loops=1)
+         Index Cond: ((org_id = o.id) AND (email = 'julia.brandt@nordwind-logistik.de'::text))
+         Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=46
+ Planning Time: 0.193 ms
+ Execution Time: 0.033 ms
+(12 rows)
+

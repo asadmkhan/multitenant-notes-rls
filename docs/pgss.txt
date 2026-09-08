@@ -1,0 +1,18 @@
+pg_stat_statements snapshot after running scripts/smoke.sh three times
+
+ calls | mean_ms | total_ms | rows |                                                     query                                                      
+-------+---------+----------+------+----------------------------------------------------------------------------------------------------------------
+     3 |   0.442 |     1.33 |    3 | WITH pgrst_source AS (INSERT INTO "public"."note"("body", "title") SELECT "pgrst_body"."body", "pgrst_body"."t
+     9 |   0.030 |     0.27 |    9 | select u.id, u.org_id, u.role from app_user u join org o on o.id = u.org_id where u.email = $1 and o.slug = $2
+     6 |   0.031 |     0.19 |    6 | WITH pgrst_source AS (DELETE FROM "public"."note" WHERE "public"."note"."title" = $1 RETURNING "public"."note"
+     3 |   0.054 |     0.16 |    3 | WITH pgrst_source AS (SELECT "pgrst_call"."author_id" FROM "public"."notes_for_me"() pgrst_call) SELECT $1::bi
+     3 |   0.038 |     0.11 |    3 | WITH pgrst_source AS ( SELECT "public"."note"."org_id" FROM "public"."note" ) SELECT $1::bigint AS total_resul
+     3 |   0.037 |     0.11 |    3 | WITH pgrst_source AS ( SELECT "public"."note"."title" FROM "public"."note" ) SELECT $1::bigint AS total_result
+     1 |   0.018 |     0.02 |    0 | BEGIN ISOLATION LEVEL READ COMMITTED READ WRITE
+     1 |   0.012 |     0.01 |    0 | SET client_encoding = 'UTF8'
+     1 |   0.006 |     0.01 |    0 | BEGIN ISOLATION LEVEL READ COMMITTED READ ONLY
+     1 |   0.001 |     0.00 |    0 | SET client_min_messages TO WARNING
+     1 |   0.001 |     0.00 |    0 | COMMIT
+     1 |   0.000 |     0.00 |    0 | ABORT
+(12 rows)
+
