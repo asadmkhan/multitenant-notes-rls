@@ -27,6 +27,9 @@ services:
       PGRST_DB_ANON_ROLE: anon
       PGRST_JWT_SECRET: ${JWT_SECRET}
       PGRST_JWT_AUD: postgrest
+      PGRST_OPENAPI_MODE: ignore-privileges
+      PGRST_OPENAPI_SECURITY_ACTIVE: "true"
+      PGRST_OPENAPI_SERVER_PROXY_URI: http://localhost:${PGRST_PORT}
     ports:
       - '${PGRST_PORT}:3000'
     depends_on:
@@ -45,6 +48,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  swagger:
+    image: swaggerapi/swagger-ui:v5.32.15
+    environment:
+      URLS: '[{"url":"http://localhost:${AUTH_API_PORT}/openapi.json","name":"auth-api"},{"url":"http://localhost:${PGRST_PORT}/","name":"postgrest"}]'
+      URLS_PRIMARY_NAME: auth-api
+    ports:
+      - '${SWAGGER_PORT}:8080'
+    depends_on:
+      - auth-api
+      - postgrest
 
 volumes:
   pgdata:

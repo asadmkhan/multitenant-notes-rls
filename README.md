@@ -18,7 +18,7 @@ and hands out JWTs.
     cp .env.example .env
     docker compose up -d --build
 
-Ports: postgres 5432, postgrest 3000, auth-api 4000. Change them in `.env` if they clash.
+Ports: postgres 5432, postgrest 3000, auth-api 4000, swagger 8080. Change them in `.env` if they clash.
 
 Migrations run only the first time the database volume is created. If you change
 a migration, wipe and start again:
@@ -26,7 +26,17 @@ a migration, wipe and start again:
     docker compose down -v
     docker compose up -d --build
 
-## try it
+## try it in the browser
+
+Open http://localhost:8080. The dropdown at the top right has two specs.
+
+1. Pick `auth-api`, open `POST /auth/login`, Try it out, pick one of the examples, Execute. Copy the `token` from the response.
+2. Pick `postgrest`, click Authorize, paste `Bearer <token>`, close.
+3. Now try `GET /note`, `POST /note`, `POST /rpc/notes_for_me`, `DELETE /note`.
+
+Log in again as someone from the other org and repeat step 2 to see the rows change.
+
+## try it with curl
 
 Seed users. There are no passwords, login is email plus org slug.
 
@@ -87,7 +97,7 @@ To see exactly what a user sees, pretend to be them in psql:
 Query stats:
 
     select calls, round(mean_exec_time::numeric, 2) ms, left(query, 80)
-    from pg_stat_statements order by total_exec_time desc limit 10;
+    from extensions.pg_stat_statements order by total_exec_time desc limit 10;
 
 ## common problems
 

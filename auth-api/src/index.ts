@@ -6,13 +6,15 @@ import { loadConfig } from './config';
 import { logger } from './logger';
 import { AuthController } from './controllers/auth.controller';
 import { HealthController } from './controllers/health.controller';
+import { OpenapiController } from './controllers/openapi.controller';
 
 const config = loadConfig();
 
 useContainer(Container);
 
 const app = createExpressServer({
-  controllers: [AuthController, HealthController],
+  controllers: [AuthController, HealthController, OpenapiController],
+  cors: true,
   validation: false,
   classTransformer: false,
   development: process.env.NODE_ENV !== 'production',
