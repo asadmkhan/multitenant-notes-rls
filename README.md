@@ -31,7 +31,7 @@ a migration, wipe and start again:
 Open http://localhost:8080. The dropdown at the top right has two specs.
 
 1. Pick `auth-api`, open `POST /auth/login`, Try it out, pick one of the examples, Execute. Copy the `token` from the response.
-2. Pick `postgrest`, click Authorize, paste `Bearer <token>`, close.
+2. Pick `postgrest`, click Authorize, paste `Bearer <token>`, close. The word `Bearer` and the space are needed, without them postgrest ignores the header and you get a 401.
 3. Now try `GET /note`, `POST /note`, `POST /rpc/notes_for_me`, `DELETE /note`.
 
 Log in again as someone from the other org and repeat step 2 to see the rows change.
